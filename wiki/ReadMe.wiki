@@ -1,0 +1,35 @@
+#labels Featured
+= Django Voting =
+
+This is a generic voting application for use in Django projects.
+
+== Installation ==
+
+Use the following command to check out the latest source:
+
+{{{
+svn checkout http://django-voting.googlecode.com/svn/trunk/ voting
+}}}
+
+== Usage ==
+
+Put this app into your project's `INSTALLED_APPS` setting and run `syncdb` to create its tables.
+
+The following is a sample `urls.py` which demonstrates setting up generic views for voting on a `Model`:
+
+{{{
+from django.conf.urls.defaults import *
+from voting.views import vote_on_object
+from shop.apps.products.models import Widget
+
+widget_dict = {
+    'model': Widget,
+    'template_object_name': 'widget',
+    'template_name': 'shop/widget_confirm_vote.html'
+}
+
+urlpatterns = patterns('',
+    (r'^widgets/(?P<object_id>\d+)/(?P<direction>up|down|clear)vote/?$',
+        vote_on_object, widget_dict),
+)
+}}}
