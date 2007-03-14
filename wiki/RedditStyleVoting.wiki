@@ -11,11 +11,12 @@ We'll assume that you're going to render a list of items where you don't have ac
 
 In this particular example, we're dealing with a list of `Link` objects, contained in the context variable `link_list`. As django-voting uses generic views, you could do this for _any_ list of instances of _any_ `Model` in your application.
 
-First, we want to load existing votes the current user has made on each `Link` in the list, as we'll need this information to set up the initial state of our voting widgets and forms.
+First, we want to load existing votes the current user has made on each `Link` in the list and the current scores and number of votes cast for each ``Link`` as we'll need this information to set up the initial state of our voting widgets and forms.
 
 {{{
 {% load voting_tags %}
-{% votes_by_user user link_list as vote_dict %}
+{% votes_by_user user on link_list as vote_dict %}
+{% scores_for_objects link_list as score_dict %}
 }}}
 
 We'll display our list of links in a basic table:
@@ -37,10 +38,11 @@ We'll display our list of links in a basic table:
 
 So far, so easy - but now we want to set up the arrow widgets for voting on the the current `Link`.
 
-We'll start by getting the vote made for the current `Link` from the votes we loaded earlier:
+We'll start by getting the vote made for the current `Link` by the current user and the `Link`'s current score from the dictionaries we loaded earlier:
 
 {{{
-      {% vote_for_item link from vote_dict as vote %}
+      {% dict_entry_for_item link from vote_dict as vote %}
+      {% dict_entry_for_item link from score_dict as score %}
 }}}
 
 `Vote` objects have `is_upvote` and `is_downvote` methods which we can use to check which direction the user voted in for the current `Link`. We guard against the user not having voted yet by first checking for the existence of the `vote` context variable.
@@ -59,14 +61,17 @@ If the user has already voted in either direction, the arrow image displayed sho
       </form>
 }}}
 
-We'll finish  off by displaying the Link itself.
+We'll finish  off by displaying the Link itself and its score details:
 
 {{{
     </td>
     <td class="item">
       <a href="{{ link.url }}">{{ link.title|escape }}</a></h2>
       <p class="details">
-        posted <span class="created">{{ link.created|timesince }} ago by {{ link.user.get_full_name|escape }}
+        <span class="score" id="score{{ link.id }}" title="after {{ score.num_votes|default:0 }} vote{{ score.num_votes|default:0|pluralize }}">{{ score.score|default:0 }} point{{ score.score|default:0|pluralize }}</span>
+        posted <span class="created">{{ link.created|timesince }} ago by
+        <span class="user"><a href="../users/{{ link.user.id }}/">{{ link.user.get_full_name|escape }}</a></span>
+        <span class="details"><a href="{{ link.get_absolute_url }}">details</a></span>
       </p>
     </td>
   </tr>{% endfor %}
@@ -76,7 +81,7 @@ We'll finish  off by displaying the Link itself.
 
 == Progressive Enhancement ==
 
-You may have noticed the `class` attribute on the voting forms and the `id` attributes on the voting forms and widgets - these will allow us to [http://domscripting.com/blog/display/41 progressively enhance] the voting process using XMLHttpRequest.
+You may have noticed the `class` attribute on the voting forms and the `id` attributes on the voting forms, widgets and score details - these will allow us to [http://domscripting.com/blog/display/41 progressively enhance] the voting process using XMLHttpRequest.
 
 When you're using the `voting.views.vote_on_object` view, you can enable fall-_forward_ to processing and responding to the request in a manner suitable for an XMLHttpRequest by passing in `allow_xmlhttprequest=True` when setting up the view.
 
@@ -125,6 +130,13 @@ function processVoteResponse(id, action)
             setArrow("down", id, downArrowType);
             setFormAction("up", id, upFormAction);
             setFormAction("down", id, downFormAction);
+
+            var score = response.score;
+            var scoreElement = $("score" + id);
+            scoreElement.innerHTML =
+                score.score + " point" + pluralize(score.score);
+            scoreElement.title =
+                "after " + score.num_votes + " vote" + pluralize(score.num_votes);
         }
         else
         {
@@ -132,6 +144,15 @@ function processVoteResponse(id, action)
         }
     };
 };
+
+function pluralize(value)
+{
+    if (value != 1)
+    {
+        return "s";
+    }
+    return "";
+}
 
 function setArrow(arrowType, id, state)
 {
