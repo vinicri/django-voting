@@ -1,4 +1,4 @@
-#summary Implementing reddit style voting with django-voting
+#summary Implementing reddit style voting for any Model with django-voting
 #labels Featured
 
 = Reddit Style Voting =
@@ -7,16 +7,18 @@ A quick guide to implementing those famous [http://programming.reddit.com reddit
 
 == Template ==
 
-We'll assume that you're going to render a list of items where you don't have access to the list in your view function, as would happen if you were using the `object_list` generic view to page through items - in this example, we're dealing with a list of `Link` objects, contained in the context variable `link_list`.
+We'll assume that you're going to render a list of items where you don't have access to the list in your view function, as would happen if you were using the `object_list` generic view to page through items. In this case, you can use the `voting_tags` template library supplied with django-voting to do all the hard work.
 
-First, we want to load any votes the current user has made on each `Link` in the list, as we'll need this information later to set up the initial state of our voting forms.
+In this particular example, we're dealing with a list of `Link` objects, contained in the context variable `link_list`. As django-voting uses generic views, you could do this for _any_ list of instances of _any_ `Model` in your application.
+
+First, we want to load existing votes the current user has made on each `Link` in the list, as we'll need this information to set up the initial state of our voting widgets and forms.
 
 {{{
 {% load voting_tags %}
 {% votes_by_user user link_list as vote_dict %}
 }}}
 
-We'll display our list of links in a table:
+We'll display our list of links in a basic table:
 
 {{{
 <table>
@@ -33,17 +35,17 @@ We'll display our list of links in a table:
     <td class="vote">
 }}}
 
-So far, so easy - but now we want to render the voting widgets for the current `Link` - these consist of an up arrow and a down arrow.
+So far, so easy - but now we want to set up the arrow widgets for voting on the the current `Link`.
 
-We'll start by getting the vote made for the current `Link`:
+We'll start by getting the vote made for the current `Link` from the votes we loaded earlier:
 
 {{{
       {% vote_for_item link from vote_dict as vote %}
 }}}
 
-`Vote` objects have `is_upvote` and `is_downvote` methods which we can use to check which direction the user voted in for the current `Link`.
+`Vote` objects have `is_upvote` and `is_downvote` methods which we can use to check which direction the user voted in for the current `Link`. We guard against the user not having voted yet by first checking for the existence of the `vote` context variable.
 
-In this implementation, each voting arrow will get its own form, with the `action` attribute determining the kind of vote which will be cast when the form is submitted. For the arrow voting widget in each form, an image submit is used. In this example, we'll `POST` the forms, so there won't be a vote confirmation screen.
+In this implementation, each voting arrow will get its own form, with the `action` attribute determining the kind of vote which will be cast when the form is submitted. For the arrow voting widget in each form, an `input type="image"` is used. We'll `POST` the forms for simplicity's sake, so there won't be a vote confirmation screen.
 
 If the user has already voted in either direction, the arrow image displayed should indicate this and submitting the form should clear the user's vote:
 
@@ -76,13 +78,13 @@ We'll finish  off by displaying the Link itself.
 
 You may have noticed the `class` attribute on the voting forms and the `id` attributes on the voting forms and widgets - these will allow us to [http://domscripting.com/blog/display/41 progressively enhance] the voting process using XMLHttpRequest.
 
-When you're using the `voting.views.vote_on_object` view, you can enable fall-forward to processing and responsing to the request in a manner suitable to XMLHttpRequest by passing in `allow_xmlhttprequest=True`.
+When you're using the `voting.views.vote_on_object` view, you can enable fall-_forward_ to processing and responding to the request in a manner suitable for an XMLHttpRequest by passing in `allow_xmlhttprequest=True` when setting up the view.
 
-Assuming we've configured voting this way, we can use JavaScript when the page loads to hijack the voting forms, sending the request via XMLHttpRequest and processing the request appropriately, which includes updating the voting forms and widgets to reflect any votes which were case.
+Assuming we've configured the voting view this way, we can use JavaScript when the page loads to hijack the voting forms, cancelling the default form submission, sending the request via XMLHttpRequest instead and processing the JSON response we're given, which involves updating the voting forms and widgets to reflect the vote which was made when it was successfully processed.
 
-For this example, we'll use the [http://www.prototypejs.org/ Prototype library], purely because it already sets the `HTTP_X_REQUESTED_WITH` header the `voting.views.vote_on_object` view checks for to determine if a request was made using XMLHttpRequest.
+For this example, we'll use the [http://www.prototypejs.org/ Prototype library], purely because it already sets the `HTTP_X_REQUESTED_WITH` header the `voting.views.vote_on_object` view looks for to determine if a request was made using XMLHttpRequest.
 
-All that said, here's the 10 minute quick and dirty script for progressively enhancing voting - simply dropping this script into the page will result in all voting being done via XMLHttpRequest, with voting arrows and form actions updated appropriately after votes have been made:
+All that said, here's the 10 minute quick and dirty script (please don't use straight _eval_ like this in the wild) for progressively enhancing voting - simply dropping this script into the page will result in all voting being done via XMLHttpRequest, with voting arrows and form actions updated appropriately after votes have been made:
 
 {{{
 function doVote(e)
