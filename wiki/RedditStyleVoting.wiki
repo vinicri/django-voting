@@ -3,17 +3,153 @@
 
 = Reddit Style Voting =
 
-A template snippet for building those famous [http://programming.reddit.com reddit] up and down voting arrows which cast or clear your votes.
+A quick guide to implementing those famous [http://programming.reddit.com reddit] up and down voting arrows which cast or clear your votes.
+
+== Template ==
+
+We'll assume that you're going to render a list of items where you don't have access to the list in your view function, as would happen if you were using the `object_list` generic view to page through items - in this example, we're dealing with a list of `Link` objects, contained in the context variable `link_list`.
+
+First, we want to load any votes the current user has made on each `Link` in the list, as we'll need this information later to set up the our voting forms.
 
 {{{
 {% load voting_tags %}
-{% vote_by_user user scene as vote %}
-<form action="{% if vote and vote.is_upvote %}clear{% else %}up{% endif %}vote/" method="POST">
-  <input type="image" src="/img/aup{% if vote and vote.is_upvote %}mod{% else %}grey{% endif %}.png">
-</form>
-<form action="{% if vote and vote.is_downvote %}clear{% else %}down{% endif %}vote/" method="POST">
-  <input type="image" src="/img/adown{% if vote and vote.is_downvote %}mod{% else %}grey{% endif %}.png">
-</form>
+{% votes_by_user user link_list as vote_dict %}
 }}}
 
-You could go on to [http://domscripting.com/blog/display/41 progressively enhance] these forms with XMLHttpRequest.
+We'll display our list of links in a table:
+
+{{{
+<table>
+<col width="1"></col>
+<col></col>
+<thead>
+  <tr>
+    <th>Vote</th>
+    <th>Link</th>
+  </tr>
+</thead>
+<tbody>
+  {% for link in link_list %}<tr class="{% cycle odd,even %}">
+    <td class="vote">
+}}}
+
+So far so easy, but now we want to render the voting widgets for the current `Link` - these consist of an up arrow and a down arrow.
+
+We'll start by getting the vote made for the current `Link`:
+
+{{{
+      {% vote_for_item link from vote_dict as vote %}
+}}}
+
+`Vote` objects have `is_upvote` and `is_downvote` methods which we can use to check which direction the user voted in for the current `Link`.
+
+In this implementation, each voting arrow will get its own form, with the `action` attribute determining the kind of vote which will be cast when the form is submitted. For the arrow voting widget in each form, an image submit is used.
+
+If the user has already voted in either direction, the arrow image displayed should indicate this and submitting the form should clear the user's vote:
+
+{{{
+      <form class="vote" id="up{{ link.id }}" action="{{ link.id }}/{% if vote and vote.is_upvote %}clear{% else %}up{% endif %}vote/" method="POST">
+        <input type="image" id="uparrow{{ link.id }}" src="{{ media_url }}img/aup{% if vote and vote.is_upvote %}mod{% else %}grey{% endif %}.png">
+      </form>
+
+      <form class="vote" id="down{{ link.id }}" action="{{ link.id }}/{% if vote and vote.is_downvote %}clear{% else %}down{% endif %}vote/" method="POST">
+        <input type="image" id="downarrow{{ link.id }}" src="{{ media_url }}img/adown{% if vote and vote.is_downvote %}mod{% else %}grey{% endif %}.png">
+      </form>
+}}}
+
+We'll finish  off by displaying the Link itself.
+
+{{{
+    </td>
+    <td class="item">
+      <a href="{{ link.url }}">{{ link.title|escape }}</a></h2>
+      <p class="details">
+        posted <span class="created">{{ link.created|timesince }} ago by {{ link.user.get_full_name|escape }}
+      </p>
+    </td>
+  </tr>{% endfor %}
+</tbody>
+</table>
+}}}
+
+== Progressive Enhancement ==
+
+You may have noticed the `class` attribute on the voting forms and the `id` attributes on the voting forms and widgets - these will allow us to [http://domscripting.com/blog/display/41 progressively enhance] the voting process using XMLHttpRequest.
+
+When you're using the `voting.views.vote_on_object` view, you can enable fall-forward to processing and responsing to the request in a manner suitable to XMLHttpRequest by passing in `allow_xmlhttprequest=True`.
+
+Assuming we've configured voting this way, we can use JavaScript when the page loads to hijack the voting forms, sending the request via XMLHttpRequest and processing the request appropriately, which includes updating the voting forms and widgets to reflect any votes which were case.
+
+For this example, we'll use the [http://www.prototypejs.org/ Prototype library], purely because it already sets the `HTTP_X_REQUESTED_WITH` header the `voting.views.vote_on_object` view checks for to determine if a request was made using XMLHttpRequest.
+
+All that said, here's the 10 minute quick and dirty script for progressively enhancing voting - simply dropping this script into the page will result in all voting being done via XMLHttpRequest, with voting arrows and form actions updated appropriately after votes have been made:
+
+{{{
+function doVote(e)
+{
+    Event.stop(e);
+    var form = Event.element(e);
+    var id = /(\d+)$/.exec(form.id)[1];
+    var action = /(up|down|clear)vote/.exec(form.action)[1];
+    new Ajax.Request(form.action, {
+        onComplete: processVoteResponse(id, action)
+    });
+};
+
+function processVoteResponse(id, action)
+{
+    return function(transport)
+    {
+        var response = eval("(" + transport.responseText + ")");
+        if (response.success)
+        {
+            var upArrowType = "grey";
+            var upFormAction = "up";
+            var downArrowType = "grey";
+            var downFormAction = "down";
+
+            if (action == "up")
+            {
+                var upArrowType = "mod";
+                var upFormAction = "clear";
+            }
+            else if (action == "down")
+            {
+                var downArrowType = "mod";
+                var downFormAction = "clear";
+            }
+
+            setArrow("up", id, upArrowType);
+            setArrow("down", id, downArrowType);
+            setFormAction("up", id, upFormAction);
+            setFormAction("down", id, downFormAction);
+        }
+        else
+        {
+            alert("Error voting: " + response.error_message);
+        }
+    };
+};
+
+function setArrow(arrowType, id, state)
+{
+    var img = $(arrowType + "arrow" + id);
+    var re = new RegExp("a" + arrowType + "(?:mod|grey)\\.png");
+    img.src = img.src.replace(re, "a" + arrowType + state + ".png");
+}
+
+function setFormAction(formType, id, action)
+{
+    var form = $(formType + id);
+    form.action = form.action.replace(/(?:up|down|clear)vote/, action + "vote");
+}
+
+Event.observe(window, "load", function()
+{
+    $$("form.vote").each(function(form)
+    {
+        Event.observe(form, "submit", doVote.bindAsEventListener(), false);
+    });
+}, false);
+}}}
+
