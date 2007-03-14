@@ -72,7 +72,7 @@ We'll finish  off by displaying the Link itself and its score details:
               title="after {{ score.num_votes|default:0 }} vote{{ score.num_votes|default:0|pluralize }}">
          {{ score.score|default:0 }} point{{ score.score|default:0|pluralize }}
         </span>
-        posted <span class="created">{{ link.created|timesince }} ago by
+        posted {{ link.created|timesince }} ago by
         <span class="user"><a href="../users/{{ link.user.id }}/">{{ link.user.get_full_name|escape }}</a></span>
         <span class="details"><a href="{{ link.get_absolute_url }}">details</a></span>
       </p>
