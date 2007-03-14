@@ -84,7 +84,7 @@ Assuming we've configured the voting view this way, we can use JavaScript when t
 
 For this example, we'll use the [http://www.prototypejs.org/ Prototype library], purely because it already sets the `HTTP_X_REQUESTED_WITH` header the `voting.views.vote_on_object` view looks for to determine if a request was made using XMLHttpRequest.
 
-All that said, here's the 10 minute quick and dirty script (please don't use straight _eval_ like this in the wild) for progressively enhancing voting - simply dropping this script into the page will result in all voting being done via XMLHttpRequest, with voting arrows and form actions updated appropriately after votes have been made:
+All that said, here's the 10 minute quick and dirty script (please don't use straight `eval` like this in the wild) for progressively enhancing voting - simply dropping this script into the page will result in all voting being done via XMLHttpRequest, with voting arrows and form actions updated appropriately after votes have been made:
 
 {{{
 function doVote(e)
