@@ -136,13 +136,13 @@ function setArrow(arrowType, id, state)
     var img = $(arrowType + "arrow" + id);
     var re = new RegExp("a" + arrowType + "(?:mod|grey)\\.png");
     img.src = img.src.replace(re, "a" + arrowType + state + ".png");
-}
+};
 
 function setFormAction(formType, id, action)
 {
     var form = $(formType + id);
     form.action = form.action.replace(/(?:up|down|clear)vote/, action + "vote");
-}
+};
 
 Event.observe(window, "load", function()
 {
