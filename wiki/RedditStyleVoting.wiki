@@ -9,7 +9,7 @@ A quick guide to implementing those famous [http://programming.reddit.com reddit
 
 We'll assume that you're going to render a list of items where you don't have access to the list in your view function, as would happen if you were using the `object_list` generic view to page through items - in this example, we're dealing with a list of `Link` objects, contained in the context variable `link_list`.
 
-First, we want to load any votes the current user has made on each `Link` in the list, as we'll need this information later to set up the our voting forms.
+First, we want to load any votes the current user has made on each `Link` in the list, as we'll need this information later to set up the initial state of our voting forms.
 
 {{{
 {% load voting_tags %}
