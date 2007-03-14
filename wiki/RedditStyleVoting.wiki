@@ -1,9 +1,9 @@
-#summary Template snippet for reddit style voting
+#summary Implementing reddit style voting with django-voting
 #labels Featured
 
 = Reddit Style Voting =
 
-A quick guide to implementing those famous [http://programming.reddit.com reddit] up and down voting arrows which cast or clear your votes.
+A quick guide to implementing those famous [http://programming.reddit.com reddit] up and down voting arrows which cast or clear your votes, using django-voting.
 
 == Template ==
 
@@ -33,7 +33,7 @@ We'll display our list of links in a table:
     <td class="vote">
 }}}
 
-So far so easy, but now we want to render the voting widgets for the current `Link` - these consist of an up arrow and a down arrow.
+So far, so easy - but now we want to render the voting widgets for the current `Link` - these consist of an up arrow and a down arrow.
 
 We'll start by getting the vote made for the current `Link`:
 
@@ -43,7 +43,7 @@ We'll start by getting the vote made for the current `Link`:
 
 `Vote` objects have `is_upvote` and `is_downvote` methods which we can use to check which direction the user voted in for the current `Link`.
 
-In this implementation, each voting arrow will get its own form, with the `action` attribute determining the kind of vote which will be cast when the form is submitted. For the arrow voting widget in each form, an image submit is used.
+In this implementation, each voting arrow will get its own form, with the `action` attribute determining the kind of vote which will be cast when the form is submitted. For the arrow voting widget in each form, an image submit is used. In this example, we'll `POST` the forms, so there won't be a vote confirmation screen.
 
 If the user has already voted in either direction, the arrow image displayed should indicate this and submitting the form should clear the user's vote:
 
@@ -152,4 +152,3 @@ Event.observe(window, "load", function()
     });
 }, false);
 }}}
-
