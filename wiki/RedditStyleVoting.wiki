@@ -128,7 +128,7 @@ This is where the `"link"` prefix we added to all of our important `class` and `
 
 {{{
 <script type="text/javascript">
-Event.observer(window, "load", function()
+Event.observe(window, "load", function()
 {
     new VoteHijacker("link");
 });
