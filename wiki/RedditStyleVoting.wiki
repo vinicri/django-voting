@@ -8,8 +8,8 @@ A quick guide to implementing those famous [http://programming.reddit.com reddit
 == URL Configuration ==
 
 In this example, we'll be using two generic views:
-  # the `object_list` view which comes with Django will be used to paginate `List` objects.
-  # the `vote_on_object` view which comes with django-voting will be used to vote on individual `List` objects.
+  # the `object_list` view which comes with Django will be used to paginate `Lint` objects.
+  # the `vote_on_object` view which comes with django-voting will be used to vote on individual `Lint` objects.
 
 Here's a sample urlconf to set this up:
 
