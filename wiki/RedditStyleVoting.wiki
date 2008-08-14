@@ -8,14 +8,15 @@ A quick guide to implementing those famous [http://programming.reddit.com reddit
 == URL Configuration ==
 
 In this example, we'll be using two generic views:
-  # the `object_list` view which comes with Django will be used to paginate `Lint` objects.
-  # the `vote_on_object` view which comes with django-voting will be used to vote on individual `Lint` objects.
+  # the `object_list` view which comes with Django will be used to paginate `Link` objects.
+  # the `vote_on_object` view which comes with django-voting will be used to vote on individual `Link` objects.
 
-Here's a sample urlconf to set this up:
+Here's a sample URLConf to set this up:
 
 {{{
 from django.conf.urls.defaults import *
 from django.views.generic.list_detail import object_list
+
 from devdocs.apps.kb.models import Link
 from voting.views import vote_on_object
 
@@ -37,7 +38,7 @@ urlpatterns = patterns('',
 
 As we're using the `object_list` generic view to paginate items, we'll have to use the `voting_tags` template library supplied with django-voting to load the voting and scoring information we'll need.
 
-In this example template, corresponding to `kb/link_list.html` defined in the above urlconf, we're dealing with a list of `Link` objects, contained in the context variable `link_list`.
+In this example template, corresponding to `kb/link_list.html` defined in the above URLConf, we're dealing with a list of `Link` objects, contained in the context variable `link_list`.
 
 First, we want to load existing votes the current user has made on each `Link` in the list and the current scores and number of votes cast for each `Link` as we'll need this information to set up the initial state of our voting widgets and forms. _If we were dealing with a list of items in our own custom view function, we could instead use the appropriate helper methods in `Vote.objects` to load voting and scoring information to place on the context._
 
